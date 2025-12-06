@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Environment
+.env
+.env.local
+*.env
+!.env.example
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+03_INFRAESTRUTURA/app/data/*.json
+05_ARQUIVO_HISTORICO/
+06_BACKUPS/
+*.log
+Api kEy
+Openrouterkey
+Hostinge.md
+Moises.MD
+09_Moisés/
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Coverage
+htmlcov/
+.coverage
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/

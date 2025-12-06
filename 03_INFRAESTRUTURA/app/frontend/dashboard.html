@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prometheus - Centro de Controle</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --success: #48bb78;
+            --error: #f56565;
+            --warning: #ed8936;
+            --info: #4299e1;
+            --dark: #1a202c;
+            --gray: #718096;
+            --light: #f7fafc;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            color: var(--dark);
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item {
+            padding: 12px 15px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--gray);
+        }
+
+        .nav-item:hover {
+            background: var(--light);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header-bar {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 28px;
+            color: var(--dark);
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--success);
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* TABS */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* CARDS */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-badge {
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* STATS */
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* FORMS */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--error);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--gray);
+            color: white;
+        }
+
+        /* TABLES */
+        .table {
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .table thead {
+            background: var(--primary);
+            color: white;
+        }
+
+        .table th, .table td {
+            padding: 15px;
+            text-align: left;
+        }
+
+        .table tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        .table tbody tr:hover {
+            background: var(--light);
+        }
+
+        /* TAGS */
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .tag-high { background: #fed7d7; color: #c53030; }
+        .tag-medium { background: #feebc8; color: #c05621; }
+        .tag-low { background: #c6f6d5; color: #276749; }
+        .tag-integration { background: #bee3f8; color: #2c5282; }
+        .tag-development { background: #d6bcfa; color: #553c9a; }
+        .tag-organization { background: #fbd38d; color: #7c2d12; }
+
+        /* LOADER */
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--light);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-container {
+            text-align: center;
+            padding: 40px;
+        }
+
+        /* ALERTS */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success { background: #c6f6d5; color: #276749; border-left: 4px solid var(--success); }
+        .alert-error { background: #fed7d7; color: #c53030; border-left: 4px solid var(--error); }
+        .alert-info { background: #bee3f8; color: #2c5282; border-left: 4px solid var(--info); }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="logo">
+            🚀 Prometheus
+        </div>
+
+        <div class="nav-item active" data-tab="dashboard">
+            <span class="nav-icon">📊</span>
+            <span>Dashboard</span>
+        </div>
+
+        <div class="nav-item" data-tab="tasks">
+            <span class="nav-icon">📝</span>
+            <span>Tarefas</span>
+        </div>
+
+        <div class="nav-item" data-tab="web-importer">
+            <span class="nav-icon">🌐</span>
+            <span>Importar Web</span>
+        </div>
+
+        <div class="nav-item" data-tab="documents">
+            <span class="nav-icon">📄</span>
+            <span>Documentos</span>
+        </div>
+
+        <div class="nav-item" data-tab="costs">
+            <span class="nav-icon">💰</span>
+            <span>Custos</span>
+        </div>
+
+        <div class="nav-item" data-tab="config">
+            <span class="nav-icon">⚙️</span>
+            <span>Configurações</span>
+        </div>
+
+        <div class="nav-item" data-tab="agent">
+            <span class="nav-icon">🤖</span>
+            <span>Agente IA</span>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <!-- HEADER BAR -->
+        <div class="header-bar">
+            <h1 class="header-title" id="page-title">Dashboard</h1>
+            <div class="status-indicator">
+                <span class="status-dot"></span>
+                Sistema Online
+            </div>
+        </div>
+
+        <!-- TAB: DASHBOARD -->
+        <div class="tab-content active" id="dashboard">
+            <div class="stat-row">
+                <div class="stat-box">
+                    <div class="stat-value" id="total-tasks">0</div>
+                    <div class="stat-label">Tarefas Pendentes</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="total-docs">0</div>
+                    <div class="stat-label">Documentos</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="total-imports">0</div>
+                    <div class="stat-label">Importações Web</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">$0.00</div>
+                    <div class="stat-label">Custo Total</div>
+                </div>
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🎯 Ações Rápidas</h3>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button class="btn btn-primary" onclick="switchTab('tasks')">
+                            📝 Gerenciar Tarefas
+                        </button>
+                        <button class="btn btn-primary" onclick="switchTab('web-importer')">
+                            🌐 Importar Página
+                        </button>
+                        <button class="btn btn-primary" onclick="switchTab('agent')">
+                            🤖 Conversar com Agente
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">📈 Atividade Recente</h3>
+                    </div>
+                    <div id="recent-activity">
+                        <p style="color: var(--gray); font-size: 14px;">Nenhuma atividade recente</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">⚡ Status do Sistema</h3>
+                    </div>
+                    <div id="system-status">
+                        <div class="loader-container">
+                            <div class="loader"></div>
+                            <p style="margin-top: 10px; color: var(--gray);">Carregando...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: TASKS -->
+        <div class="tab-content" id="tasks">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📝 Gerenciador de Tarefas</h3>
+                    <button class="btn btn-primary" onclick="loadTasks()">
+                        🔄 Atualizar
+                    </button>
+                </div>
+                
+                <div id="tasks-content">
+                    <div class="loader-container">
+                        <div class="loader"></div>
+                        <p style="margin-top: 10px; color: var(--gray);">Carregando tarefas...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: WEB IMPORTER -->
+        <div class="tab-content" id="web-importer">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🌐 Importar Página Web</h3>
+                </div>
+
+                <form id="import-form">
+                    <div class="form-group">
+                        <label class="form-label">URL da Página</label>
+                        <input type="url" class="form-input" id="import-url" 
+                               placeholder="https://exemplo.com/artigo" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Título (opcional)</label>
+                        <input type="text" class="form-input" id="import-title" 
+                               placeholder="Deixe em branco para usar título da página">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Categoria</label>
+                        <select class="form-select" id="import-category">
+                            <option value="Web_Imports">Web Imports (padrão)</option>
+                            <option value="Tecnicas">Técnicas</option>
+                            <option value="Processos">Processos</option>
+                            <option value="Conceitos">Conceitos</option>
+                            <option value="Ferramentas">Ferramentas</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        🔄 Importar e Converter
+                    </button>
+                </form>
+
+                <div id="import-result" style="margin-top: 20px;"></div>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <div class="card-header">
+                    <h3 class="card-title">📚 Importações Recentes</h3>
+                </div>
+                <div id="recent-imports">
+                    <p style="color: var(--gray);">Nenhuma importação ainda</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: DOCUMENTS -->
+        <div class="tab-content" id="documents">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📄 Gerenciador de Documentos</h3>
+                    <button class="btn btn-primary" onclick="scanDocuments()">
+                        🔍 Escanear Documentos
+                    </button>
+                </div>
+                
+                <div id="documents-content">
+                    <div class="loader-container">
+                        <div class="loader"></div>
+                        <p style="margin-top: 10px; color: var(--gray);">Carregando...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: COSTS -->
+        <div class="tab-content" id="costs">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">💰 Análise de Custos</h3>
+                    <button class="btn btn-primary" onclick="loadCosts()">
+                        🔄 Atualizar
+                    </button>
+                </div>
+
+                <div id="costs-content">
+                    <div class="loader-container">
+                        <div class="loader"></div>
+                        <p style="margin-top: 10px; color: var(--gray);">Carregando custos...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: CONFIG -->
+        <div class="tab-content" id="config">
+            <!-- LLM Providers Status -->
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="card-header">
+                    <h3 class="card-title">🤖 Provedores de LLM</h3>
+                </div>
+
+                <div id="config-content">
+                    <div class="loader-container">
+                        <div class="loader"></div>
+                        <p style="margin-top: 10px; color: var(--gray);">Carregando...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GitHub Integration Status -->
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="card-header">
+                    <h3 class="card-title">🐙 GitHub Integration</h3>
+                </div>
+                <div id="github-status" style="padding: 20px;">
+                    <div class="loader-container">
+                        <div class="loader"></div>
+                        <p style="margin-top: 10px; color: var(--gray);">Carregando status do GitHub...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- N8N Integration Status -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🔄 N8N Workflow Automation</h3>
+                </div>
+                <div id="n8n-status" style="padding: 20px;">
+                    <div class="loader-container">
+                        <div class="loader"></div>
+                        <p style="margin-top: 10px; color: var(--gray);">Carregando status do N8N...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: AGENT -->
+        <div class="tab-content" id="agent">
+            <!-- Agent Configuration Card -->
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="card-header">
+                    <h3 class="card-title">⚙️ Configuração do Modelo</h3>
+                </div>
+                <div style="padding: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label class="form-label">Provedor LLM</label>
+                            <select class="form-input" id="agent-provider">
+                                <option value="openai">OpenAI (GPT)</option>
+                                <option value="anthropic">Anthropic (Claude)</option>
+                                <option value="gemini">Google (Gemini)</option>
+                                <option value="deepseek">DeepSeek</option>
+                                <option value="openrouter">OpenRouter (Multi-Model)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Modelo</label>
+                            <select class="form-input" id="agent-model">
+                                <option value="gpt-4o-mini">GPT-4o Mini (Rápido)</option>
+                                <option value="gpt-4o">GPT-4o (Balanceado)</option>
+                                <option value="gpt-4">GPT-4 (Poderoso)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                            <button type="button" class="btn btn-secondary" id="update-provider" style="width: 100%;">
+                                🔄 Atualizar Provedor
+                            </button>
+                        </div>
+                    </div>
+                    <div id="provider-status" style="margin-top: 10px; padding: 10px; border-radius: 8px; display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Agent Task Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🤖 Enviar Tarefa para o Agente</h3>
+                </div>
+
+                <form id="agent-form">
+                    <div class="form-group">
+                        <label class="form-label">Descrição da Tarefa</label>
+                        <textarea class="form-textarea" id="agent-task" 
+                                  placeholder="Descreva o que você quer que o agente faça..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Contexto Adicional (opcional)</label>
+                        <textarea class="form-textarea" id="agent-context" 
+                                  placeholder="Informações adicionais..." style="min-height: 80px;"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="notify-n8n" style="width: auto;">
+                            <span>📬 Notificar resultado via N8N (se configurado)</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        🚀 Enviar para Agente
+                    </button>
+                </form>
+
+                <div id="agent-response" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+
+        // NAVIGATION
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const tab = item.getAttribute('data-tab');
+                switchTab(tab);
+            });
+        });
+
+        function switchTab(tabName) {
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('data-tab') === tabName) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+
+            // Update title
+            const titles = {
+                'dashboard': 'Dashboard',
+                'tasks': 'Gerenciador de Tarefas',
+                'web-importer': 'Importar Página Web',
+                'documents': 'Documentos',
+                'costs': 'Análise de Custos',
+                'config': 'Configurações',
+                'agent': 'Agente IA'
+            };
+            document.getElementById('page-title').textContent = titles[tabName];
+
+            // Load content if needed
+            if (tabName === 'tasks') loadTasks();
+            if (tabName === 'documents') scanDocuments();
+            if (tabName === 'costs') loadCosts();
+            if (tabName === 'config') loadConfig();
+        }
+
+        // TASKS
+        async function loadTasks() {
+            const container = document.getElementById('tasks-content');
+            container.innerHTML = '<div class="loader-container"><div class="loader"></div></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/tasks`);
+                if (!response.ok) throw new Error('API não disponível');
+                
+                const data = await response.json();
+                displayTasks(data);
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="alert alert-error">
+                        ❌ Erro ao carregar tarefas: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function displayTasks(data) {
+            const container = document.getElementById('tasks-content');
+            
+            if (!data || !data.tasks || data.tasks.length === 0) {
+                container.innerHTML = '<p style="color: var(--gray);">Nenhuma tarefa encontrada</p>';
+                return;
+            }
+
+            const html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Tarefa</th>
+                            <th>Tipo</th>
+                            <th>Prioridade</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.tasks.map(task => `
+                            <tr>
+                                <td>${task.content}</td>
+                                <td><span class="tag tag-${task.type}">${task.type}</span></td>
+                                <td><span class="tag tag-${task.priority}">${task.priority}</span></td>
+                                <td>${task.status}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = html;
+            document.getElementById('total-tasks').textContent = data.tasks.length;
+        }
+
+        // WEB IMPORTER
+        document.getElementById('import-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const url = document.getElementById('import-url').value;
+            const title = document.getElementById('import-title').value;
+            const category = document.getElementById('import-category').value;
+            const resultDiv = document.getElementById('import-result');
+
+            resultDiv.innerHTML = '<div class="loader-container"><div class="loader"></div></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/import-url`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, title: title || null, category })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            ✅ Página importada com sucesso!
+                            <br><strong>Arquivo:</strong> ${result.file}
+                            <br><strong>Categoria:</strong> ${category}
+                        </div>
+                    `;
+                    document.getElementById('import-form').reset();
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-error">
+                            ❌ Erro: ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-error">
+                        ❌ Erro de conexão: ${error.message}
+                    </div>
+                `;
+            }
+        });
+
+        // DOCUMENTS
+        async function scanDocuments() {
+            const container = document.getElementById('documents-content');
+            container.innerHTML = '<div class="loader-container"><div class="loader"></div></div>';
+
+            setTimeout(() => {
+                container.innerHTML = `
+                    <div class="alert alert-info">
+                        ℹ️ Funcionalidade em desenvolvimento
+                    </div>
+                `;
+            }, 1000);
+        }
+
+        // COSTS
+        async function loadCosts() {
+            const container = document.getElementById('costs-content');
+            container.innerHTML = '<div class="loader-container"><div class="loader"></div></div>';
+
+            setTimeout(() => {
+                container.innerHTML = `
+                    <div class="alert alert-info">
+                        ℹ️ Funcionalidade em desenvolvimento
+                    </div>
+                `;
+            }, 1000);
+        }
+
+        // CONFIG
+        async function loadConfig() {
+            const container = document.getElementById('config-content');
+            container.innerHTML = '<div class="loader-container"><div class="loader"></div></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/integration-status`);
+                const data = await response.json();
+
+                let html = '<div style="display: grid; gap: 15px;">';
+                
+                // Filter only LLM providers (exclude github and n8n)
+                const llmProviders = Object.entries(data.providers).filter(([key]) => 
+                    !['github', 'n8n'].includes(key)
+                );
+                
+                for (const [provider, info] of llmProviders) {
+                    const status = info.configured ? 'Configurado ✅' : 'Não configurado ❌';
+                    const statusClass = info.configured ? 'success' : 'error';
+                    
+                    html += `
+                        <div class="card" style="margin: 0;">
+                            <strong>${info.label}</strong>
+                            <div style="margin-top: 10px;">
+                                <span class="tag tag-${statusClass}">${status}</span>
+                            </div>
+                            <p style="margin-top: 10px; color: var(--gray); font-size: 13px;">
+                                Variável: <code>${info.hint}</code>
+                            </p>
+                        </div>
+                    `;
+                }
+                
+                html += '</div>';
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="alert alert-error">
+                        ❌ Erro ao carregar configurações: ${error.message}
+                    </div>
+                `;
+            }
+
+            // Load GitHub status
+            loadGitHubStatus();
+            
+            // Load N8N status
+            loadN8NStatus();
+        }
+
+        async function loadGitHubStatus() {
+            const container = document.getElementById('github-status');
+            container.innerHTML = '<div class="loader"></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/github/status`);
+                const data = await response.json();
+
+                if (data.authenticated) {
+                    // Get rate limits
+                    const limitsResponse = await fetch(`${API_BASE}/github/rate-limits`);
+                    const limitsData = await limitsResponse.json();
+
+                    const coreRate = limitsData.rate || {};
+                    const remaining = coreRate.remaining || 0;
+                    const limit = coreRate.limit || 0;
+                    const percentage = limit > 0 ? Math.round((remaining / limit) * 100) : 0;
+
+                    container.innerHTML = `
+                        <div class="alert alert-success">
+                            ✅ Conectado ao GitHub
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <p><strong>👤 Usuário:</strong> ${data.user}</p>
+                            <p><strong>📦 Plano:</strong> ${data.plan}</p>
+                            <p style="margin-top: 15px;"><strong>📊 Rate Limits (API Core):</strong></p>
+                            <div style="margin-top: 10px; background: var(--light); padding: 15px; border-radius: 8px;">
+                                <p><strong>${remaining}</strong> / ${limit} requisições disponíveis (${percentage}%)</p>
+                                <div style="width: 100%; background: var(--border); height: 8px; border-radius: 4px; margin-top: 8px; overflow: hidden;">
+                                    <div style="width: ${percentage}%; background: ${percentage > 20 ? 'var(--success)' : 'var(--error)'}; height: 100%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div class="alert alert-warning">
+                            ⚠️ ${data.message}
+                        </div>
+                        <p style="margin-top: 10px; color: var(--gray);">
+                            Configure <code>GITHUB_TOKEN</code> no arquivo .env para habilitar monitoramento de rate limits.
+                        </p>
+                    `;
+                }
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="alert alert-error">
+                        ❌ Erro ao carregar status: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function loadN8NStatus() {
+            const container = document.getElementById('n8n-status');
+            container.innerHTML = '<div class="loader"></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/n8n/status`);
+                const data = await response.json();
+
+                if (data.connected) {
+                    container.innerHTML = `
+                        <div class="alert alert-success">
+                            ✅ Conectado ao N8N
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <p><strong>🔗 Webhook URL:</strong> <code>${data.webhook_url}</code></p>
+                            <p><strong>🔑 API Key:</strong> ${data.api_key_configured ? 'Configurada ✅' : 'Não configurada ❌'}</p>
+                            <p><strong>🔐 Webhook Secret:</strong> ${data.webhook_secret_configured ? 'Configurado ✅' : 'Não configurado ❌'}</p>
+                        </div>
+                        <div style="margin-top: 15px; padding: 15px; background: var(--light); border-radius: 8px;">
+                            <p style="margin-bottom: 10px;"><strong>💡 Funcionalidades Disponíveis:</strong></p>
+                            <ul style="margin-left: 20px; color: var(--gray);">
+                                <li>Enviar resultados de tarefas para workflows N8N</li>
+                                <li>Receber webhooks do N8N para processamento</li>
+                                <li>Notificações via Slack, Email, Discord, etc.</li>
+                                <li>Agendamento de tarefas através do N8N</li>
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div class="alert alert-warning">
+                            ⚠️ ${data.message}
+                        </div>
+                        <p style="margin-top: 10px; color: var(--gray);">
+                            Configure <code>N8N_WEBHOOK_URL</code> e <code>N8N_API_KEY</code> no arquivo .env para habilitar automação.
+                        </p>
+                        <div style="margin-top: 15px; padding: 15px; background: var(--light); border-radius: 8px;">
+                            <p style="margin-bottom: 10px;"><strong>📚 Como Configurar:</strong></p>
+                            <ol style="margin-left: 20px; color: var(--gray);">
+                                <li>Instale o N8N: <code>npm install -g n8n</code></li>
+                                <li>Inicie o N8N: <code>n8n start</code></li>
+                                <li>Crie workflows com webhooks no N8N</li>
+                                <li>Configure as URLs dos webhooks no .env</li>
+                            </ol>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="alert alert-error">
+                        ❌ Erro ao carregar status: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // AGENT - Provider Change
+        document.getElementById('update-provider').addEventListener('click', async () => {
+            const provider = document.getElementById('agent-provider').value;
+            const model = document.getElementById('agent-model').value;
+            const statusDiv = document.getElementById('provider-status');
+
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '<div class="loader"></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/agent/provider`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ provider, model })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            ✅ Provedor atualizado: ${provider} com modelo ${model}
+                        </div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-error">
+                            ❌ Erro ao atualizar: ${result.message || result.error}
+                        </div>
+                    `;
+                }
+
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="alert alert-error">
+                        ❌ Erro de conexão: ${error.message}
+                    </div>
+                `;
+            }
+        });
+
+        // AGENT - Update model options when provider changes
+        document.getElementById('agent-provider').addEventListener('change', (e) => {
+            const modelSelect = document.getElementById('agent-model');
+            const provider = e.target.value;
+
+            const modelOptions = {
+                'openai': [
+                    { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Rápido)' },
+                    { value: 'gpt-4o', label: 'GPT-4o (Balanceado)' },
+                    { value: 'gpt-4', label: 'GPT-4 (Poderoso)' }
+                ],
+                'anthropic': [
+                    { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet (Mais Recente)' },
+                    { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus (Poderoso)' },
+                    { value: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet (Balanceado)' }
+                ],
+                'gemini': [
+                    { value: 'gemini-pro', label: 'Gemini Pro' },
+                    { value: 'gemini-pro-vision', label: 'Gemini Pro Vision' }
+                ],
+                'deepseek': [
+                    { value: 'deepseek-chat', label: 'DeepSeek Chat' },
+                    { value: 'deepseek-coder', label: 'DeepSeek Coder' }
+                ],
+                'openrouter': [
+                    { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet (via OR)' },
+                    { value: 'openai/gpt-4o', label: 'GPT-4o (via OR)' },
+                    { value: 'google/gemini-pro', label: 'Gemini Pro (via OR)' }
+                ]
+            };
+
+            modelSelect.innerHTML = modelOptions[provider]
+                .map(opt => `<option value="${opt.value}">${opt.label}</option>`)
+                .join('');
+        });
+
+        // AGENT - Submit Task
+        document.getElementById('agent-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const task = document.getElementById('agent-task').value;
+            const context = document.getElementById('agent-context').value;
+            const notifyN8N = document.getElementById('notify-n8n').checked;
+            const responseDiv = document.getElementById('agent-response');
+
+            responseDiv.innerHTML = '<div class="loader-container"><div class="loader"></div></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/task`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        description: task, 
+                        context: context || null,
+                        notify_n8n: notifyN8N
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    let n8nInfo = '';
+                    if (result.n8n_notification) {
+                        if (result.n8n_notification.sent) {
+                            n8nInfo = `<div class="alert alert-success" style="margin-top: 10px;">📬 Resultado enviado para N8N (Execution: ${result.n8n_notification.execution_id})</div>`;
+                        } else {
+                            n8nInfo = `<div class="alert alert-warning" style="margin-top: 10px;">⚠️ Falha ao enviar para N8N: ${result.n8n_notification.error}</div>`;
+                        }
+                    }
+
+                    responseDiv.innerHTML = `
+                        <div class="card">
+                            <div class="alert alert-success">
+                                ✅ Tarefa processada com sucesso
+                            </div>
+                            <div style="margin-top: 15px; padding: 15px; background: var(--light); border-radius: 8px;">
+                                <strong>Resposta:</strong>
+                                <pre style="margin-top: 10px; white-space: pre-wrap;">${result.response}</pre>
+                            </div>
+                            <p style="margin-top: 10px; color: var(--gray); font-size: 13px;">
+                                ⏱️ Tempo: ${result.elapsed_time}s | 🆔 ${result.task_id}
+                            </p>
+                            ${n8nInfo}
+                        </div>
+                    `;
+                    document.getElementById('agent-form').reset();
+                } else {
+                    responseDiv.innerHTML = `
+                        <div class="alert alert-error">
+                            ❌ Erro: ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                responseDiv.innerHTML = `
+                    <div class="alert alert-error">
+                        ❌ Erro de conexão: ${error.message}
+                    </div>
+                `;
+            }
+        });
+
+        // SYSTEM STATUS
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                document.getElementById('system-status').innerHTML = `
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Status:</span>
+                            <strong style="color: var(--success);">${data.status}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Versão:</span>
+                            <strong>${data.version}</strong>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('system-status').innerHTML = `
+                    <div class="alert alert-error">
+                        ❌ API offline
+                    </div>
+                `;
+            }
+        }
+
+        // INIT
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSystemStatus();
+            
+            // Auto-refresh every 30s
+            setInterval(loadSystemStatus, 30000);
+        });
+    </script>
+</body>
+</html>

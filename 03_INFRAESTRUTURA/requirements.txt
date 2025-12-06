@@ -1,0 +1,21 @@
+# Core Dependencies
+openai>=1.0.0
+python-dotenv>=1.0.0
+requests>=2.28.0
+flask>=2.3.0
+flask-cors>=4.0.0
+tabulate>=0.9.0
+
+# Web Scraping
+beautifulsoup4>=4.11.0
+html2text>=2020.1.16
+
+# LLM Providers (optional - install only what you need)
+anthropic>=0.18.0  # For Claude
+google-generativeai>=0.3.0  # For Gemini
+
+# GitHub Integration
+PyGithub>=2.1.0  # For GitHub API and Copilot rate limits
+
+# N8N and Webhooks
+httpx>=0.25.0  # Better async HTTP client for webhooks
