@@ -22,46 +22,9 @@ CORS(app)
 # Inicializar agente
 agent = EvolutionaryAgent()
 
-# ==========================================
-# SISTEMA DE USUÁRIOS - FAMÍLIA PROMETHEUS
-# ==========================================
-AUTHORIZED_USERS = {
-    "moises": {
-        "password": "senha123",
-        "roles": ["admin"],
-        "name": "Moisés"
-    },
-    "admin": {
-        "password": os.getenv('ADMIN_PASS', 'prometheus2025'),
-        "roles": ["admin"],
-        "name": "Administrador"
-    },
-    "valeria": {
-        "password": "senha123",
-        "roles": ["user"],
-        "name": "Valéria"
-    },
-    "rebeca": {
-        "password": "senha123",
-        "roles": ["user"],
-        "name": "Rebeca"
-    },
-    "isaias": {
-        "password": "senha123",
-        "roles": ["user"],
-        "name": "Isaias"
-    },
-    "naiara": {
-        "password": "senha123",
-        "roles": ["user"],
-        "name": "Naiara"
-    },
-    "gabriel": {
-        "password": "senha123",
-        "roles": ["user"],
-        "name": "Gabriel"
-    }
-}
+# Configuração de Autenticação (Simples)
+ADMIN_USER = os.getenv('ADMIN_USER', 'admin')
+ADMIN_PASS = os.getenv('ADMIN_PASS', 'prometheus2025')
 
 # ==========================================
 # ROTAS DE AUTENTICAÇÃO
@@ -69,57 +32,20 @@ AUTHORIZED_USERS = {
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    """Autenticação com múltiplos usuários da família"""
-    data = request.json or {}
-    username = data.get('username', '').lower().strip()
-    password = data.get('password', '')
+    """Autenticação simples"""
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
     
-    # Verificar no dicionário de usuários
-    user = AUTHORIZED_USERS.get(username)
-    
-    if user and user['password'] == password:
+    if username == ADMIN_USER and password == ADMIN_PASS:
+        # Em produção, usar JWT real. Aqui usamos um token simples.
         return jsonify({
             "status": "success",
-            "token": f"prometheus-token-{username}-valid",
-            "user": {
-                "username": username,
-                "name": user['name'],
-                "roles": user['roles']
-            }
-        }), 200
-    
-    # Bypass de emergência (senha master)
-    if password == "master2025":
-        return jsonify({
-            "status": "success",
-            "token": "prometheus-master-token",
-            "user": {
-                "username": username or "master",
-                "name": "Acesso Master",
-                "roles": ["admin"]
-            }
+            "token": "prometheus-session-token-valid",
+            "user": username
         }), 200
     
     return jsonify({"error": "Credenciais inválidas"}), 401
-
-@app.route('/api/bypass-login', methods=['GET'])
-def bypass_login():
-    """Bypass para acesso direto sem credenciais"""
-    return jsonify({
-        "status": "success",
-        "token": "prometheus-bypass-token",
-        "user": {
-            "username": "bypass",
-            "name": "Acesso Direto",
-            "roles": ["admin"]
-        }
-    }), 200
-
-@app.route('/api/users', methods=['GET'])
-def list_users():
-    """Listar usuários (sem senhas)"""
-    users_safe = {k: {"name": v["name"], "roles": v["roles"]} for k, v in AUTHORIZED_USERS.items()}
-    return jsonify(users_safe), 200
 
 # ==========================================
 # ROTAS DE SAÚDE

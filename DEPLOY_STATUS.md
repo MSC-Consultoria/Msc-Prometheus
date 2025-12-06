@@ -4,17 +4,22 @@
 **Status:** ✅ ONLINE
 **URL:** http://72.62.9.90
 
-## Componentes
-- **Frontend:** Nginx servindo arquivos estáticos em `/var/www/prometheus/app/frontend`
-- **Backend:** Flask API rodando via Systemd em `http://127.0.0.1:5000` (proxied por Nginx em `/api`)
-- **Banco de Dados:** SQLite (local)
+## 🚀 Novidades (v2025.12.06)
+- **Sistema Agêntico Familiar**: Painel dedicado para gestão de todos os membros da família.
+    - **Moisés**: Admin, Marketing, Sistemas.
+    - **Valéria**: Entretenimento (Filmes/Séries) e Clube do Livro.
+    - **Isaias**: Jurídico (OAB) e Leilões.
+    - **Rebeca**: Concurso Detran RJ.
+    - **Naiara**: Gestão Recanto Estações e Concursos.
+    - **Gabriel**: Festeja Kids e Consultoria.
+- **Sistema de Ensino**: Interface gamificada com Nível, Ofensiva e XP.
 
-## Verificação
-- **Nginx:** Active (running)
-- **Prometheus Service:** Active (running)
-- **API Health:** OK (`/api/health` retornou 200)
+## Componentes Técnicos
+- **Frontend**: Atualizado `dashboard.html` com nova aba "Família".
+- **Backend**: API Flask rodando em `http://127.0.0.1:5000`.
+- **Servidor**: Nginx servindo estáticos e proxy reverso para API.
 
 ## Próximos Passos
-1. Configurar HTTPS (SSL)
-2. Configurar variáveis de ambiente (GITHUB_TOKEN, N8N_KEY) no arquivo `.env` no servidor.
-3. Configurar CI/CD automático via GitHub Actions (opcional).
+1. Implementar lógica real de gamificação no Backend.
+2. Conectar os botões "Acessar Painel" às rotas específicas da API.
+3. Configurar HTTPS.
