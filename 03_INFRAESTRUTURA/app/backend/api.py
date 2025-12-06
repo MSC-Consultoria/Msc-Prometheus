@@ -22,6 +22,31 @@ CORS(app)
 # Inicializar agente
 agent = EvolutionaryAgent()
 
+# Configuração de Autenticação (Simples)
+ADMIN_USER = os.getenv('ADMIN_USER', 'admin')
+ADMIN_PASS = os.getenv('ADMIN_PASS', 'prometheus2025')
+
+# ==========================================
+# ROTAS DE AUTENTICAÇÃO
+# ==========================================
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    """Autenticação simples"""
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    
+    if username == ADMIN_USER and password == ADMIN_PASS:
+        # Em produção, usar JWT real. Aqui usamos um token simples.
+        return jsonify({
+            "status": "success",
+            "token": "prometheus-session-token-valid",
+            "user": username
+        }), 200
+    
+    return jsonify({"error": "Credenciais inválidas"}), 401
+
 # ==========================================
 # ROTAS DE SAÚDE
 # ==========================================

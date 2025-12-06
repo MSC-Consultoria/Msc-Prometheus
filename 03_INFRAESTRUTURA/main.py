@@ -134,3 +134,35 @@ class AgenticMarkdown:
         {contexto_extra}
         
         === TAREFA ATUAL A SER EXECUTADA ===
+        {tarefa}
+        """
+        
+        print("    ⏳ Aguardando resposta da IA...")
+        try:
+            response = client.chat.completions.create(
+                model=MODELO,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.1
+            )
+            
+            resposta_agente = response.choices[0].message.content
+            
+            # Processar a resposta para extrair e salvar arquivos
+            arquivos_criados = self.processar_escrita_arquivos(resposta_agente)
+            
+            return resposta_agente, arquivos_criados
+            
+        except Exception as e:
+            print(f"❌ Erro na API: {e}")
+            return f"Erro ao executar tarefa: {e}", []
+
+def main():
+    print("🚀 Iniciando Agente Markdown...")
+    # Placeholder para execução principal
+    pass
+
+if __name__ == "__main__":
+    main()

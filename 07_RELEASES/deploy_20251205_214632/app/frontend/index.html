@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prometheus - Sistema de Agentes Evolutivos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --success: #48bb78;
+            --error: #f56565;
+            --warning: #ed8936;
+            --dark: #1a202c;
+            --light: #f7fafc;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            color: var(--primary);
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .header-status {
+            text-align: right;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 15px 25px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #718096;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-button:hover {
+            color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* GRID LAYOUT */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .status-success {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .status-error {
+            background: #f44336;
+            color: white;
+        }
+
+        .status-pending {
+            background: #ff9800;
+            color: white;
+        }
+
+        .response-box {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .response-box pre {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: #f0f0f0;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .timeline {
+            margin-top: 15px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .timeline-item {
+            padding: 10px;
+            border-left: 3px solid #667eea;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .timeline-time {
+            font-size: 0.8em;
+            color: #999;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            color: #333;
+            margin: 5px 0;
+        }
+
+        .timeline-status {
+            font-size: 0.85em;
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-top: 5px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 10px 0;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader.active {
+            display: inline-block;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>🚀 Prometheus</h1>
+            <p>Sistema de Agentes Evolutivos de IA</p>
+        </header>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Card 1: Nova Tarefa -->
+            <div class="card">
+                <h2>📝 Nova Tarefa</h2>
+                
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label for="taskDescription">Descrição da Tarefa</label>
+                        <textarea id="taskDescription" placeholder="Descreva o que você quer que o agente faça..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="taskContext">Contexto (opcional)</label>
+                        <textarea id="taskContext" placeholder="Contexto adicional ou informações importantes..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit">Enviar para Agente</button>
+                        <div class="loader" id="loader"></div>
+                    </div>
+                </form>
+
+                <div id="taskResponse"></div>
+            </div>
+
+            <!-- Card 1.5: Web Importer -->
+            <div class="card">
+                <h2>🌐 Importar Página Web</h2>
+                
+                <form id="importForm">
+                    <div class="form-group">
+                        <label for="importUrl">URL da Página</label>
+                        <input type="url" id="importUrl" placeholder="https://exemplo.com/artigo" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="importTitle">Título (opcional)</label>
+                        <input type="text" id="importTitle" placeholder="Deixe em branco para usar o título da página">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="importCategory">Categoria</label>
+                        <select id="importCategory">
+                            <option value="Web_Imports">Web Imports (padrão)</option>
+                            <option value="Templates">Templates</option>
+                            <option value="Tecnicas">Técnicas</option>
+                            <option value="Processos">Processos</option>
+                            <option value="Conceitos">Conceitos</option>
+                            <option value="Ferramentas">Ferramentas</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit">🔄 Importar e Converter</button>
+                        <div class="loader" id="importLoader"></div>
+                    </div>
+                </form>
+
+                <div id="importResponse"></div>
+            </div>
+
+            <!-- Card 2: Status do Agente -->
+            <div class="card">
+                <h2>📊 Status do Agente</h2>
+                
+                <div id="agentStatus">Carregando...</div>
+
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalTasks">0</div>
+                        <div class="stat-label">Tarefas Processadas</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="successRate">0%</div>
+                        <div class="stat-label">Taxa de Sucesso</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="knowledgeEntries">0</div>
+                        <div class="stat-label">Entradas de Conhecimento</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="agentVersion">-</div>
+                        <div class="stat-label">Versão</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Timeline de Evolução -->
+            <div class="card full-width">
+                <h2>📈 Timeline de Evolução</h2>
+                
+                <div class="timeline" id="evolutionTimeline">
+                    Carregando timeline...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+
+        // ==========================================
+        // FUNÇÕES AUXILIARES
+        // ==========================================
+
+        function showLoader(show = true) {
+            const loader = document.getElementById('loader');
+            if (show) {
+                loader.classList.add('active');
+            } else {
+                loader.classList.remove('active');
+            }
+        }
+
+        function formatDate(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleString('pt-BR');
+        }
+
+        // ==========================================
+        // CARREGAMENTO INICIAL
+        // ==========================================
+
+        async function loadAgentStats() {
+            try {
+                const response = await fetch(`${API_BASE}/agent/stats`);
+                const data = await response.json();
+
+                document.getElementById('totalTasks').textContent = data.total_tasks;
+                document.getElementById('successRate').textContent = data.success_rate;
+                document.getElementById('knowledgeEntries').textContent = data.knowledge_entries;
+                document.getElementById('agentVersion').textContent = data.version;
+                document.getElementById('agentStatus').innerHTML = `
+                    <p><strong>Status:</strong> Online ✅</p>
+                    <p><strong>Versão:</strong> ${data.version}</p>
+                    <p><strong>Áreas de Aprendizado:</strong> ${data.learning_areas.join(', ') || 'N/A'}</p>
+                `;
+            } catch (error) {
+                console.error('Erro ao carregar stats:', error);
+                document.getElementById('agentStatus').innerHTML = '⚠️ Erro ao conectar com o agente';
+            }
+        }
+
+        async function loadTimeline() {
+            try {
+                const response = await fetch(`${API_BASE}/agent/timeline?limit=10`);
+                const data = await response.json();
+
+                const timeline = document.getElementById('evolutionTimeline');
+                if (data.timeline.length === 0) {
+                    timeline.innerHTML = '<p>Nenhuma tarefa processada ainda.</p>';
+                    return;
+                }
+
+                timeline.innerHTML = data.timeline.map(item => `
+                    <div class="timeline-item">
+                        <div class="timeline-time">${formatDate(item.timestamp)}</div>
+                        <div class="timeline-title">${item.task}</div>
+                        <div class="timeline-status status-${item.success ? 'success' : 'error'}">
+                            ${item.success ? '✅ Sucesso' : '❌ Erro'}
+                        </div>
+                        ${item.learnings.length > 0 ? `
+                            <small style="display: block; margin-top: 5px; color: #666;">
+                                🎓 ${item.learnings.join(', ')}
+                            </small>
+                        ` : ''}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Erro ao carregar timeline:', error);
+                document.getElementById('evolutionTimeline').innerHTML = '⚠️ Erro ao carregar timeline';
+            }
+        }
+
+        // ==========================================
+        // SUBMISSÃO DE TAREFAS
+        // ==========================================
+
+        document.getElementById('taskForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const description = document.getElementById('taskDescription').value;
+            const context = document.getElementById('taskContext').value;
+
+            if (!description.trim()) {
+                alert('Por favor, descreva a tarefa');
+                return;
+            }
+
+            showLoader(true);
+            document.getElementById('taskResponse').innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/task`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        description: description,
+                        context: context || null
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    const statusClass = result.status === 'success' ? 'status-success' : 'status-error';
+                    document.getElementById('taskResponse').innerHTML = `
+                        <div class="status-badge ${statusClass}">
+                            ${result.status === 'success' ? '✅ Processada com Sucesso' : '❌ Erro no Processamento'}
+                        </div>
+                        <div class="response-box">
+                            <strong>Resposta:</strong>
+                            <pre>${result.response}</pre>
+                        </div>
+                        <small style="display: block; margin-top: 10px; color: #666;">
+                            ⏱️ Tempo: ${result.elapsed_time}s | 🆔 ${result.task_id}
+                        </small>
+                    `;
+
+                    // Limpar formulário
+                    document.getElementById('taskForm').reset();
+
+                    // Recarregar stats e timeline
+                    setTimeout(() => {
+                        loadAgentStats();
+                        loadTimeline();
+                    }, 1000);
+                } else {
+                    document.getElementById('taskResponse').innerHTML = `
+                        <div class="status-badge status-error">
+                            ❌ Erro: ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                document.getElementById('taskResponse').innerHTML = `
+                    <div class="status-badge status-error">
+                        ❌ Erro de Conexão: ${error.message}
+                    </div>
+                `;
+            } finally {
+                showLoader(false);
+            }
+        });
+
+        // ==========================================
+        // WEB IMPORTER
+        // ==========================================
+
+        document.getElementById('importForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const url = document.getElementById('importUrl').value;
+            const title = document.getElementById('importTitle').value;
+            const category = document.getElementById('importCategory').value;
+
+            if (!url.trim()) {
+                alert('Por favor, insira uma URL válida');
+                return;
+            }
+
+            document.getElementById('importLoader').classList.add('active');
+            document.getElementById('importResponse').innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/import-url`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        title: title || null,
+                        category: category
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('importResponse').innerHTML = `
+                        <div class="status-badge status-success">
+                            ✅ Importação Concluída
+                        </div>
+                        <div class="response-box">
+                            <strong>📄 Arquivo criado:</strong> ${result.file}<br>
+                            <strong>📂 Categoria:</strong> ${category}<br>
+                            <strong>🔗 URL:</strong> <a href="${result.url}" target="_blank">${result.url}</a><br>
+                            <strong>📍 Localização:</strong> <code>${result.path}</code>
+                        </div>
+                    `;
+
+                    // Limpar formulário
+                    document.getElementById('importForm').reset();
+                } else {
+                    document.getElementById('importResponse').innerHTML = `
+                        <div class="status-badge status-error">
+                            ❌ Erro: ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                document.getElementById('importResponse').innerHTML = `
+                    <div class="status-badge status-error">
+                        ❌ Erro de Conexão: ${error.message}
+                    </div>
+                `;
+            } finally {
+                document.getElementById('importLoader').classList.remove('active');
+            }
+        });
+
+        // ==========================================
+        // INICIALIZAÇÃO
+        // ==========================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAgentStats();
+            loadTimeline();
+
+            // Atualizar a cada 30 segundos
+            setInterval(() => {
+                loadAgentStats();
+                loadTimeline();
+            }, 30000);
+        });
+    </script>
+</body>
+</html>
