@@ -19,3 +19,6 @@ PyGithub>=2.1.0  # For GitHub API and Copilot rate limits
 
 # N8N and Webhooks
 httpx>=0.25.0  # Better async HTTP client for webhooks
+
+# Supabase integration
+supabase>=2.4.0
