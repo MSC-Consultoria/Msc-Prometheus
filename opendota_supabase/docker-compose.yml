@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  streamlit:
+    build:
+      context: ..
+      dockerfile: opendota_supabase/Dockerfile
+    env_file:
+      - ../.env
+    environment:
+      - STREAMLIT_PORT=${STREAMLIT_PORT-8501}
+    restart: unless-stopped
+    command: ["streamlit", "run", "streamlit_app.py", "--server.address=0.0.0.0", "--server.port=${STREAMLIT_PORT-8501}"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - opendota
+
+  nginx:
+    image: nginx:1.25-alpine
+    depends_on:
+      streamlit:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    networks:
+      - opendota
+
+networks:
+  opendota:
+    driver: bridge

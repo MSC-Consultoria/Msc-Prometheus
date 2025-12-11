@@ -135,6 +135,12 @@ def health():
     }), 200
 
 
+@app.route('/healthz', methods=['GET'])
+def uptime_probe():
+    """Health-check simples para monitoramento externo"""
+    return jsonify({"status": "ok", "service": "prometheus-backend"}), 200
+
+
 # ==========================================
 # ROTAS DO AGENTE
 # ==========================================

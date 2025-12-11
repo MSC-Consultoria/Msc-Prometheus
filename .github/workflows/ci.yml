@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r 03_INFRAESTRUTURA/requirements.txt -r requirements-dev.txt
+      - name: Ruff
+        run: ruff check opendota_supabase 03_INFRAESTRUTURA/app/backend
+      - name: Black
+        run: black --check opendota_supabase 03_INFRAESTRUTURA/app/backend
+      - name: Import sanity
+        run: python -m compileall opendota_supabase 03_INFRAESTRUTURA/app/backend
