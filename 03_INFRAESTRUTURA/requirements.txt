@@ -22,3 +22,8 @@ httpx>=0.25.0  # Better async HTTP client for webhooks
 
 # Supabase integration
 supabase>=2.4.0
+# Data pipelines and dashboarding
+supabase>=2.4.0
+psycopg2-binary>=2.9.9
+pandas>=2.2.0
+streamlit>=1.34.0
